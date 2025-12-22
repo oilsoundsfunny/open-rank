@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Rating List Stage</title>
+</head>
+<body>
+    <h1>Add Stage</h1>
+
+    <p>
+        {{ rating_list.name }}
+        {{ rating_list.thread_count }} threads,
+        {{ rating_list.hashsize }} MB,
+        {{ rating_list.base_time }} + {{ rating_list.increment }}
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit">Add Stage</button>
+    </form>
+
+    <p><a href="{% url 'rating_list_list' %}">Back to Rating Lists</a></p>
+</body>
+</html>

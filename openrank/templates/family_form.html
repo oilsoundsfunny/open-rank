@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Engine Family</title>
+</head>
+<body>
+    <h1>Create Engine Family</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit"> Create </button>
+    </form>
+
+    <p>
+        <a href="{% url 'family_list' %}">Back to Family List</a>
+    </p>
+</body>
+</html>

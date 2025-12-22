@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% if engine.pk %}
+        <title>Modify Engine</title>
+    {% else %}
+        <title>Create Engine</title>
+    {% endif %}
+</head>
+<body>
+    {% if engine.pk %}
+        <h1>Modify Engine</h1>
+    {% else %}
+        <h1>Create Engine</h1>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        {% if engine.pk %}
+            <button type="submit">Modify</button>
+        {% else %}
+            <button type="submit">Create</button>
+        {% endif %}
+    </form>
+
+    {% if engine.pk %}
+        <h3>Add to Rating Lists</h3>
+        {% for rl in rating_lists %}
+            {% if engine not in rl.engines.all %}
+                <form method="post" action="{% url 'engine_add_to_list' engine.id rl.id %}">
+                {% csrf_token %}
+                <button type="submit">Add to {{ rl }}</button>
+                </form>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <p><a href="{% url 'family_list' %}">Back to family list</a></p>
+</body>
+</html>

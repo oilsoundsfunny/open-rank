@@ -1,0 +1,138 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+
+from .models import EngineFamily, Engine, RatingList, RatingListStage, Pairing
+from .forms import EngineFamilyForm, EngineForm, RatingListForm, RatingListStageForm
+
+
+def next_stage_number(rating_list):
+    last = rating_list.stages.order_by('-stage_number').first()
+    return 1 if last is None else last.stage_number + 1
+
+
+def family_list(request):
+    families = EngineFamily.objects.all().prefetch_related('engines')
+    return render(request, 'families.html', { 'families': families })
+
+def family_create(request):
+
+    if request.method == 'POST':
+        form = EngineFamilyForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('family_list')
+    else:
+        form = EngineFamilyForm()
+
+    return render(request, 'family_form.html', { 'form' : form })
+
+def family_engines(request, family_id):
+    family  = get_object_or_404(EngineFamily, id=family_id)
+    engines = family.engines.order_by('-release_date')
+    return render(request, 'family_engines.html', { 'family' : family, 'engines' : engines })
+
+
+def engine_create(request, family_id=None):
+
+    initial = {}
+    engine = Engine()
+
+    if family_id is not None:
+        family = get_object_or_404(EngineFamily, id=family_id)
+        initial['family'] = family
+
+    if request.method == 'POST':
+        form = EngineForm(request.POST)
+        if form.is_valid():
+            engine = form.save()
+            return redirect('family_engines', family_id=engine.family.id)
+    else:
+        form = EngineForm(initial=initial)
+
+    return render(request, 'engine_form.html', { 'form' : form, 'engine' : engine })
+
+def engine_edit(request, engine_id):
+
+    engine = get_object_or_404(Engine, id=engine_id)
+
+    if request.method == 'POST':
+        form = EngineForm(request.POST, instance=engine)
+        if form.is_valid():
+            form.save()
+            return redirect('family_engines', family_id=engine.family.id)
+    else:
+        form = EngineForm(instance=engine)
+
+    context = { 'form' : form, 'engine' : engine, 'rating_lists' : RatingList.objects.all() }
+    return render(request, 'engine_form.html', context)
+
+def engine_add_to_list(request, engine_id, list_id):
+
+    engine      = get_object_or_404(Engine, id=engine_id)
+    rating_list = get_object_or_404(RatingList, id=list_id)
+
+    rating_list.engines.add(engine)
+
+    return redirect('engine_edit', engine_id=engine.id)
+
+
+def rating_list_list(request):
+    rating_lists = RatingList.objects.all().prefetch_related('stages')
+    return render(request, 'rating_lists.html', { 'rating_lists' : rating_lists })
+
+def rating_list_create(request):
+
+    if request.method == 'POST':
+        form = RatingListForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('rating_list_list')
+    else:
+        form = RatingListForm()
+
+    return render(request, 'rating_list_form.html', { 'form': form })
+
+def rating_list_stage_create(request, rating_list_id):
+
+    rating_list = get_object_or_404(RatingList, id=rating_list_id)
+
+    if request.method == 'POST':
+        form = RatingListStageForm(request.POST)
+        if form.is_valid():
+            stage = form.save(commit=False)
+            stage.rating_list = rating_list
+            stage.stage_number = next_stage_number(rating_list)
+            stage.save()
+            return redirect('rating_list_list')
+    else:
+        form = RatingListStageForm()
+
+    return render(request, 'rating_list_stage_form.html', { 'form' : form, 'rating_list' : rating_list })
+
+
+def pairings_for_stage(request, stage_id):
+    stage    = get_object_or_404(RatingListStage, id=stage_id)
+    pairings = stage.pairings.all()
+    return render(request, 'stage_pairings.html', { 'stage' : stage, 'pairings' : pairings })
+
+def pairings_generate(request, stage_id):
+
+    stage   = get_object_or_404(RatingListStage, id=stage_id)
+    engines = stage.rating_list.engines.all()
+    to_add  = []
+
+    # TODO: Respect the Stages, i.e. determine the relative ranking of engines,
+    #       to determine which engines to generate pairings for.
+
+    # Create pairings only for engines marked as the latest
+    for i, engine_a in enumerate(engines):
+        for engine_b in engines[i+1:]:
+            if (engine_a.latest and engine_b.latest
+                and not Pairing.objects.filter(stage=stage, engine_a=engine_a, engine_b=engine_b).exists()
+                and not Pairing.objects.filter(stage=stage, engine_a=engine_b, engine_b=engine_a).exists()):
+                to_add.append(Pairing(stage=stage, engine_a=engine_a, engine_b=engine_b))
+    Pairing.objects.bulk_create(to_add)
+
+    # TODO: Create pairings for old engines, strictly against latest ones, for historical record
+
+    return redirect('stage_pairings', stage_id=stage.id)

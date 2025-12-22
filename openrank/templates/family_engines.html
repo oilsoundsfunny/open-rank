@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ family.name }} Engines</title>
+</head>
+<body>
+    <h1>Engines in {{ family.name }}</h1>
+
+    <p>
+        Author: {{ family.author }}<br>
+        <a href="{{ family.website }}">Website</a>
+    </p>
+
+    {% if engines %}
+        <table border="1" cellpadding="4">
+            <tr>
+                <th>Version</th>
+                <th>Released</th>
+                <th>Disabled</th>
+                <th>Latest</th>
+                <th>Edit</th>
+            </tr>
+
+            {% for engine in engines %}
+                <tr>
+                    <td>{{ engine.version }}</td>
+                    <td>{{ engine.released_at|default:"—" }}</td>
+                    <td>{% if engine.disabled %}X{% endif %}</td>
+                    <td>{% if engine.latest %}X{% endif %}</td>
+                    <td><a href="{% url 'engine_edit' engine.id %}">Edit</a></td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+
+    <p><a href="{% url 'family_list' %}">Back to families</a></p>
+</body>
+</html>

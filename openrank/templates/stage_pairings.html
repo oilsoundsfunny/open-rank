@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pairings for Stage {{ stage.stage_number }}</title>
+</head>
+<body>
+    <h1>Pairings for Stage #{{ stage.stage_number }} of Rating List {{ stage.rating_list }}</h1>
+
+    <form method="post" action="{% url 'generate_pairings' stage.id %}">
+        {% csrf_token %}
+        <button type="submit">Generate Pairings</button>
+    </form>
+
+    <table border=2>
+        <tr>
+            <th>Engine</th>
+            <th>Engine</th>
+            <th>Results</th>
+        </tr>
+        {% for pairing in pairings %}
+        <tr>
+            <td>{{ pairing.engine_a }}</td>
+            <td>{{ pairing.engine_b }}</td>
+            <td>({{ pairing.penta|join:", " }})</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <p><a href="{% url 'rating_list_list' %}">Back to Rating Lists</a></p>
+</body>
+</html>

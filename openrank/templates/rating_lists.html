@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rating Lists</title>
+</head>
+<body>
+    <h1>Rating Lists</h1>
+
+    <p><a href="{% url 'rating_list_create' %}">Create new rating list</a></p>
+
+    <hr>
+
+    {% for rl in rating_lists %}
+        <h2>
+            {{ rl.name }}
+            ({{ rl.thread_count }} threads,
+             {{ rl.hashsize }} MB,
+             {{ rl.base_time }} + {{ rl.increment }})
+        </h2>
+
+        <table border=2>
+            <thead>
+                <tr>
+                    <th>Stage</th>
+                    <th>Top-N</th>
+                    <th>Games</th>
+                    <th>Pairings</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stage in rl.stages.all %}
+                <tr>
+                    <td>{{ stage.stage_number }}</td>
+                    <td>{{ stage.top_n_engines }}</td>
+                    <td>{{ stage.games }}</td>
+                    <td><a href="{% url 'stage_pairings' stage.id %}">View</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p><a href="{% url 'rating_list_stage_create' rl.id %}">Add Stage</a></p>
+
+        <hr>
+    {% endfor %}
+</body>
+</html>
