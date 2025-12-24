@@ -1,0 +1,18 @@
+Docker build log begin...
+
+Error building docker_build.log:
+
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from docker_build.log
+#1 transferring dockerfile: 70B done
+#1 DONE 0.0s
+docker_build.log:1
+--------------------
+   1 | >>> Docker build log begin...
+   2 |     
+   3 |     
+--------------------
+ERROR: failed to solve: dockerfile parse error on line 1: unknown instruction: Docker
+
+============================================================
