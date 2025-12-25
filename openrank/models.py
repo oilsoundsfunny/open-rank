@@ -1,5 +1,14 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Q, F
+
+class User(AbstractUser):
+
+    enabled = models.BooleanField(default=False)
+    admin   = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.username
 
 class EngineFamily(models.Model):
 
@@ -39,8 +48,8 @@ class RatingList(models.Model):
     name         = models.CharField(max_length=255)
     thread_count = models.IntegerField()
     hashsize     = models.IntegerField()
-    base_time    = models.IntegerField()
-    increment    = models.IntegerField()
+    base_time    = models.FloatField()
+    increment    = models.FloatField()
 
     engines = models.ManyToManyField('Engine', related_name='rating_lists', blank=True)
 

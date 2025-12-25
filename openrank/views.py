@@ -1,13 +1,32 @@
-from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth import login
+from django.shortcuts import render, redirect, get_object_or_404
 
-from .models import EngineFamily, Engine, RatingList, RatingListStage, Pairing
-from .forms import EngineFamilyForm, EngineForm, RatingListForm, RatingListStageForm
+from .models import *
+from .forms import *
 
+# HELPERS
 
 def next_stage_number(rating_list):
     last = rating_list.stages.order_by('-stage_number').first()
     return 1 if last is None else last.stage_number + 1
+
+
+def index(request):
+    return render(request, 'index.html')
+
+def signup(request):
+
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('index')
+    else:
+        form = CustomUserCreationForm()
+
+    return render(request, 'registration/signup.html', { 'form': form })
 
 
 def family_list(request):

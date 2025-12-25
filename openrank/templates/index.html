@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+</head>
+<body>
+
+<h1>Home</h1>
+
+{% if user.is_authenticated %}
+    <p>Logged in as {{ user.username }}</p>
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+{% else %}
+    <p>
+        <a href="{% url 'login' %}">Login</a> |
+        <a href="{% url 'signup' %}">Create Account</a>
+    </p>
+{% endif %}
+
+<hr>
+
+<ul>
+    <li><a href="{% url 'rating_list_list' %}">Rating Lists</a></li>
+    <li><a href="{% url 'family_list' %}">Engine Families</a></li>
+</ul>
+
+</body>
+</html>
