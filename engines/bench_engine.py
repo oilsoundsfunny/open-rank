@@ -67,7 +67,7 @@ if __name__ == '__main__':
     p.add_argument('--engine', required=True)
     p.add_argument('--seconds', type=int, default=10)
     p.add_argument('--threads', type=int, default=1)
-    p.add_argument('--debug', type=bool, default=False, action='store_true')
+    p.add_argument('--debug', default=False, action='store_true')
     args = p.parse_args()
 
     values = bench_engine(args.engine, args.seconds, args.threads, args.debug)
@@ -75,3 +75,4 @@ if __name__ == '__main__':
     print('min:', min(values))
     print('max:', max(values))
     print('avg:', sum(values) / len(values))
+    print('raw:', values)
