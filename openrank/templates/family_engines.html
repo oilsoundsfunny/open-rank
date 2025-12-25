@@ -18,15 +18,17 @@
                 <th>Released</th>
                 <th>Disabled</th>
                 <th>Latest</th>
+                <th>NPS</th>
                 <th>Edit</th>
             </tr>
 
             {% for engine in engines %}
                 <tr>
                     <td>{{ engine.version }}</td>
-                    <td>{{ engine.released_at|default:"—" }}</td>
+                    <td>{{ engine.release_date }}</td>
                     <td>{% if engine.disabled %}X{% endif %}</td>
                     <td>{% if engine.latest %}X{% endif %}</td>
+                    <td>{{ engine.nps }}</td>
                     <td><a href="{% url 'engine_edit' engine.id %}">Edit</a></td>
                 </tr>
             {% endfor %}

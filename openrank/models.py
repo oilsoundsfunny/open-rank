@@ -20,6 +20,8 @@ class Engine(models.Model):
     latest   = models.BooleanField(default=False)
     private  = models.BooleanField(default=False)
 
+    nps = models.PositiveIntegerField(default=0)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(

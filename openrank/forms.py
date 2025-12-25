@@ -9,7 +9,7 @@ class EngineFamilyForm(forms.ModelForm):
 class EngineForm(forms.ModelForm):
     class Meta:
         model = Engine
-        fields = [ 'family', 'version', 'release_date', 'disabled', 'latest' ]
+        fields = [ 'family', 'version', 'release_date', 'disabled', 'latest', 'nps' ]
         widgets = { 'release_date': forms.DateInput(attrs={ 'type' : 'date'}) }
 
 class RatingListForm(forms.ModelForm):
