@@ -42,6 +42,7 @@ class HardwareConfig:
             return 'UNKNOWN'
 
     def get_numa_core_mapping(self):
+
         try:
             numa_text = subprocess.check_output(['numactl', '--hardware'], text=True)
             numa_map = {
@@ -57,13 +58,13 @@ class HardwareConfig:
     def validate_hardware(self):
 
         if self.arch != 'x86':
-            raise Exception('open-rank is only intended for x86 machines')
+            raise Exception('open-rank is only supported for x86 machines')
 
         if self.os_name != 'Linux':
-            raise Exception('open-rank is only intended for Linux machines')
+            raise Exception('open-rank is only supported for Linux machines')
 
         if 'avx2' not in self.cpu_flags or 'fma' not in self.cpu_flags:
-            raise Exception('open-rank is only intended for AVX2 machines with FMA')
+            raise Exception('open-rank is only supported for AVX2 machines with FMA')
 
         if not self.numa_nodes:
             raise Exception('open-rank failed to determine NUMA information via numactl')
