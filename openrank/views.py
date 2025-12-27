@@ -166,6 +166,19 @@ def pairings_generate(request, stage_id):
 #                                         C L I E N T                                         #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+def client_auth_helper(request):
+
+    worker_id = request.POST.get('worker_id')
+    secret    = request.POST.get('secret')
+
+    if not worker_id or not secret:
+        return None, JsonResponse({ 'error': 'Authentication information not provided.' })
+
+    if not (worker := Worker.objects.filter(id=worker_id, secret=secret).first()):
+        return None, JsonResponse({ 'error': 'Provided information does not match an existing Worker.' })
+
+    return worker, None
+
 @csrf_exempt
 @require_POST
 def client_connect(request):
@@ -195,3 +208,14 @@ def client_connect(request):
         'secret'    : worker.secret,
         'worker_id' : worker.id,
     })
+
+@csrf_exempt
+@require_POST
+def client_request_work(request):
+
+    # Always authenticate via the secret token
+    worker, resp = client_auth_helper(request)
+    if resp != None:
+        return resp
+
+

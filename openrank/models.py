@@ -11,7 +11,6 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
-
 class Worker(models.Model):
 
     user    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='workers')
@@ -23,7 +22,6 @@ class Worker(models.Model):
 
     def __str__(self):
         return '%s by %s' % (hwinfo.get('cpu_name', 'UNKNOWN'), user.username)
-
 
 class EngineFamily(models.Model):
 
@@ -105,8 +103,19 @@ class Pairing(models.Model):
     # Incremented for every individual game assigned to a worker
     book_index = models.IntegerField(default=0)
 
+    # Should be updated if underlying RatingListStage ever changes
+    finished = models.BooleanField(default=False)
+
     def penta(self):
         return (self.LL, self.LD, self.DD, self.DW, self.WW)
+
+    def compute_finished(self):
+        self.finished = sum(self.penta()) >= self.stage.games
+        return self.finished
+
+    def save(self, *args, **kwargs):
+        self.compute_finished()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return '%s vs %s, Stage %s' % (str(self.engine_a), str(self.engine_b), str(self.stage))
