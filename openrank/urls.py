@@ -4,9 +4,10 @@ from . import views
 urlpatterns = [
 
     path('', views.index, name='index'),
-
     path('accounts/', include('django.contrib.auth.urls')),
     path('signup/', views.signup, name='signup'),
+
+    # General Admin Views, not intended for distribution
 
     path('families/', views.family_list, name='family_list'),
     path('families/new/', views.family_create, name='family_create'),
@@ -22,4 +23,8 @@ urlpatterns = [
     path('lists/<int:rating_list_id>/stages/new/', views.rating_list_stage_create, name='rating_list_stage_create'),
     path('lists/<int:stage_id>/pairings/', views.pairings_for_stage, name='stage_pairings'),
     path('lists/<int:stage_id>/generate_pairings/', views.pairings_generate, name='generate_pairings'),
+
+    # Client Views
+
+    path('client/connect', views.client_connect, name='client_connect'),
 ]

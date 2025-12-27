@@ -1,6 +1,11 @@
+import secrets
+
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from .models import *
 from .forms import *
@@ -155,3 +160,38 @@ def pairings_generate(request, stage_id):
     # TODO: Create pairings for old engines, strictly against latest ones, for historical record
 
     return redirect('stage_pairings', stage_id=stage.id)
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                         C L I E N T                                         #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+@csrf_exempt
+@require_POST
+def client_connect(request):
+
+    username  = request.POST.get('username')
+    password  = request.POST.get('password')
+    worker_id = request.POST.get('worker_id')
+    secret    = request.POST.get('secret')
+
+    if not username or not password:
+        return JsonResponse({ 'error' : 'Missing username or password.' })
+
+    if not (user := authenticate(request, username=username, password=password)):
+        return JsonResponse({ 'error' : 'Failed to authenticate user.' })
+
+    if not user.enabled:
+        return JsonResponse({ 'error' : 'Authenticated successfully, but the user is not enabled.' })
+
+    worker = None # Attempt to fetch an already saved Worker
+    if worker_id and secret:
+        worker = Worker.objects.filter(id=worker_id, secret=secret, user=user).first()
+
+    if not worker: # No such Worker found, create a new one
+        worker = Worker.objects.create(user=user, secret=secrets.token_hex(32))
+
+    return JsonResponse({
+        'secret'    : worker.secret,
+        'worker_id' : worker.id,
+    })

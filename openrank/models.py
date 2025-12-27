@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Q, F
@@ -9,6 +10,20 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class Worker(models.Model):
+
+    user    = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='workers')
+    pairing = models.ForeignKey('Pairing', on_delete=models.SET_NULL, null=True, blank=True, related_name='workers')
+
+    updated = models.DateTimeField(auto_now=True)
+    secret  = models.CharField(max_length=64, default='', blank=True)
+    hwinfo  = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return '%s by %s' % (hwinfo.get('cpu_name', 'UNKNOWN'), user.username)
+
 
 class EngineFamily(models.Model):
 
@@ -86,6 +101,9 @@ class Pairing(models.Model):
     DD = models.IntegerField(default=0)
     DW = models.IntegerField(default=0)
     WW = models.IntegerField(default=0)
+
+    # Incremented for every individual game assigned to a worker
+    book_index = models.IntegerField(default=0)
 
     def penta(self):
         return (self.LL, self.LD, self.DD, self.DW, self.WW)

@@ -2,8 +2,13 @@
 
 import argparse
 import os
+import requests
 
+from exceptions import *
 from hardware import HardwareConfig
+
+def url_join(*parts):
+    return '/'.join(p.strip('/') for p in parts if p)
 
 def parse_arguments():
 
@@ -35,10 +40,34 @@ def parse_arguments():
 
     return args
 
+def client_connect(args):
+
+    secret = worker_id = None
+
+    if os.path.exists('worker.info'):
+        with open('worker.info', 'r') as f:
+            secret, worker_id = f.read().strip().split()
+
+    payload = { 'username': args.username, 'password': args.password }
+    if secret and worker_id:
+        payload.update({ 'secret': secret, 'worker_id': worker_id })
+
+    if 'error' in (resp := requests.post(url_join(args.server, 'client/connect'), data=payload).json()):
+        raise OpenRankAuthenticationError(resp['error'])
+
+    with open('worker.info', 'w') as f:
+        f.write('%s %s' % (resp['secret'], resp['worker_id']))
+
+    return resp
+
 if __name__ == '__main__':
 
     # Use client.py's path as the base pathway always
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+    # Grab the hardware info first, in case this machine is not allowed
     hwinfo = HardwareConfig()
-    args   = parse_arguments()
+
+    # Going forward, all requests contain secret and worker_id
+    auth_data = client_connect(parse_arguments())
+
