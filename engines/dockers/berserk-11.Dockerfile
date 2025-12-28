@@ -10,10 +10,10 @@ RUN git init berserk && \
     git fetch --depth 1 origin c67650dbf6dde7f41ca7f2c8aa9e4b718eb304f8 && \
     git checkout FETCH_HEAD && \
     cd src && \
-    make -j release VERSION=12
+    make -j release VERSION=11
 
 FROM ubuntu:24.04
 
-COPY --from=builder /berserk/src/berserk-12-x64-avx2 /usr/local/bin/berserk
+COPY --from=builder /berserk/src/berserk-11-x64-avx2 /usr/local/bin/berserk
 
 CMD [ "/usr/local/bin/berserk" ]
