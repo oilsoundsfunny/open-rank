@@ -21,7 +21,7 @@ RUN git init heimdall && \
     git remote add origin https://github.com/nocturn9x/heimdall.git && \
     git fetch --depth 1 origin 1.2.2 && \
     git checkout FETCH_HEAD && \
-    make modern EXE=heimdall
+    make modern EXE=bin/heimdall
 
 FROM ubuntu:24.04
 
