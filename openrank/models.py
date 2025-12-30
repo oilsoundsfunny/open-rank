@@ -53,8 +53,11 @@ class Engine(models.Model):
             )
         ]
 
+    def name(self):
+        return '%s-%s' % (self.family.name.lower(), self.version.lower())
+
     def image_name(self):
-        return 'openrank-%s-%s' % (self.family.name.lower(), self.version.lower())
+        return 'openrank-%s' % (self.name())
 
     def tarball_name(self):
         return self.image_name() + '.tar.zst'

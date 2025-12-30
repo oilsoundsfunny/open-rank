@@ -2,6 +2,7 @@ import json
 import pathlib
 import secrets
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.db import transaction
@@ -10,7 +11,6 @@ from django.http import JsonResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-
 
 from .models import *
 from .forms import *
@@ -290,6 +290,6 @@ def client_pull_image(request):
     # TODO: We must verify that this worker is eligible for the requested image
     # TODO: We must throw a SERIOUS flag if the tarball is missing
 
-    path = pathlib.Path('engines/tarballs') / engine.tarball_name()
+    path = settings.ENGINE_ARTIFACT_DIR / engine.tarball_name()
 
     return FileResponse(open(path, 'rb'), as_attachment=True, filename=engine.tarball_name())

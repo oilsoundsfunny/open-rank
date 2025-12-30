@@ -119,8 +119,9 @@ STATIC_URL = 'static/'
 
 # Custom Settings for open-rank
 
-LOGIN_REDIRECT_URL = '/'
-
+LOGIN_REDIRECT_URL  = '/'
 LOGOUT_REDIRECT_URL = '/'
+AUTH_USER_MODEL     = 'openrank.User'
 
-AUTH_USER_MODEL = 'openrank.User'
+ENGINE_ARTIFACT_DIR = BASE_DIR / 'engines' / 'tarballs'
+BOOK_ARTIFACT_DIR   = BASE_DIR / 'books'
