@@ -18,7 +18,7 @@ def main(seconds, threads, debug):
         values = bench_engine(engine, seconds, threads, debug)
         avg    = sum(values) / len(values)
 
-        print ('%32s %10d' % (engine, avg))
+        print ('%-25s %8d' % (engine, avg))
 
 if __name__ == '__main__':
 

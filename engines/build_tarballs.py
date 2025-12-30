@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import re
 import subprocess
 
 def image_exists(name):
@@ -19,7 +20,8 @@ def main():
 
     p = argparse.ArgumentParser()
     p.add_argument('--rebuild', action='store_true', help='Rebuild existing images')
-    p.add_argument('--dry', action='store_true', help='Do not actually do anything')
+    p.add_argument('--dry',     action='store_true', help='Do not actually do anything')
+    p.add_argument('--regex',   default=None,        help='Regex to match for each .Dockerfile')
     args = p.parse_args()
 
     # Ensure tarball dir exists
@@ -34,6 +36,9 @@ def main():
         dockerfile_path = os.path.join(DOCKER_DIR, filename)
         base_name       = filename.rsplit('.Dockerfile', 1)[0]
         image_name      = 'openrank-%s' % (base_name.lower())
+
+        if args.regex and not re.match(args.regex, base_name):
+            continue
 
         if not args.rebuild and image_exists(image_name):
             print ('Found image %s for %s' % (image_name, dockerfile_path))
