@@ -7,7 +7,7 @@ from django.utils.dateparse import parse_date
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'opensite.settings')
 django.setup()
 
-from openrank.models import EngineFamily, Engine
+from openrank.models import *
 
 FAMILIES_CSV = 'families.csv'
 ENGINES_CSV = 'engines.csv'
@@ -58,5 +58,10 @@ for family in EngineFamily.objects.all():
         latest_engine.latest = True
         latest_engine.save(update_fields=['latest'])
         print('Marked latest engine %s for family %s' % (latest_engine.version, family.name))
+
+# --- 4. Add all Engines to all rating lists ---
+
+for rating_list in RatingList.objects.all():
+    rating_list.engines.add(*Engine.objects.all())
 
 print('Import complete.')
