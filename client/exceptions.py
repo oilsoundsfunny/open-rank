@@ -5,6 +5,9 @@ class OpenRankHardwareReqError(Exception):
 class OpenRankGeneralReqError(Exception):
     pass
 
+class OpenRankFailedDockerLoadError(Exception):
+    pass
+
 class OpenRankAuthenticationError(Exception):
     pass
 

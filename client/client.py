@@ -6,6 +6,7 @@ import json
 import os
 import pathlib
 import requests
+import subprocess
 import tarfile
 import zstandard as zstd
 
@@ -14,6 +15,12 @@ from hardware import HardwareConfig
 
 def url_join(*parts):
     return '/'.join(p.strip('/') for p in parts if p) + '/'
+
+def image_exists(image_name):
+    return subprocess.run(
+        ['docker', 'image', 'inspect', image_name],
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    ).returncode == 0
 
 def parse_arguments():
 
@@ -79,13 +86,18 @@ def client_request_work(args, auth_data):
 
 def client_pull_image(args, auth_data, engine_json):
 
-    # TODO: Check if the image already exists
+    image_name = engine_json['image']
+
+    if image_exists(image_name):
+        print ('Found Docker Image for %s locally' % (image_name))
+        return
 
     payload = {
         **auth_data,
         'engine_id' : engine_json['engine_id']
     }
 
+    print ('Downloading Docker Image for %s...' % (image_name))
     resp = requests.post(url_join(args.server, 'client/pull_image/'), data=payload, stream=True)
 
     if resp.headers.get('Content-Type', '').startswith('application/json'):
@@ -93,17 +105,21 @@ def client_pull_image(args, auth_data, engine_json):
 
     out_dir = pathlib.Path('tarballs')
     out_dir.mkdir(exist_ok=True)
-
     out_name = out_dir / (engine_json['image'] + '.tar')
 
+    print ('... Decompressing %s.tar.zst' % (image_name))
     with zstd.ZstdDecompressor().stream_reader(resp.raw) as reader:
         with open(out_name, 'wb') as fout:
             for chunk in iter(lambda: reader.read(1024 * 1024), b''):
                 fout.write(chunk)
 
-    # TODO: Import the image into docker from the tarball
+    print ('... Loading Docker Image from %s.tar' % (image_name))
+    subprocess.run(['docker', 'load', '-i', str(out_name)], capture_output=True, text=True)
 
-    pass
+    if not image_exists(image_name):
+        raise OpenRankFailedDockerLoadError('Could not load %s' % (image_name))
+
+    print ('... Docker Image for %s is ready\n' % (image_name))
 
 if __name__ == '__main__':
 

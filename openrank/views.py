@@ -284,16 +284,12 @@ def client_pull_image(request):
         return resp
 
     engine_id = request.POST.get('engine_id')
-    print (engine_id)
     if not engine_id or not (engine := Engine.objects.filter(id=engine_id).first()):
         return JsonResponse({ 'error' : 'Attempting to pull non-existent engine image' })
 
     # TODO: We must verify that this worker is eligible for the requested image
+    # TODO: We must throw a SERIOUS flag if the tarball is missing
 
     path = pathlib.Path('engines/tarballs') / engine.tarball_name()
-
-    import sys
-    sys.stdout.write(str(path) + '\n')
-    sys.stdout.flush()
 
     return FileResponse(open(path, 'rb'), as_attachment=True, filename=engine.tarball_name())
