@@ -8,6 +8,7 @@ import pathlib
 import requests
 import subprocess
 import tarfile
+import tempfile
 import zstandard as zstd
 
 from exceptions import *
@@ -103,18 +104,16 @@ def client_pull_image(args, auth_data, engine_json):
     if resp.headers.get('Content-Type', '').startswith('application/json'):
         raise OpenRankGeneralReqError(resp.json()['error'])
 
-    out_dir = pathlib.Path('tarballs')
-    out_dir.mkdir(exist_ok=True)
-    out_name = out_dir / (engine_json['image'] + '.tar')
+    with tempfile.NamedTemporaryFile(suffix='.tar') as tmp_tar:
 
-    print ('... Decompressing %s.tar.zst' % (image_name))
-    with zstd.ZstdDecompressor().stream_reader(resp.raw) as reader:
-        with open(out_name, 'wb') as fout:
+        print ('... Decompressing %s.tar.zst' % (image_name))
+        with zstd.ZstdDecompressor().stream_reader(resp.raw) as reader:
             for chunk in iter(lambda: reader.read(1024 * 1024), b''):
-                fout.write(chunk)
+                tmp_tar.write(chunk)
+        tmp_tar.flush()
 
-    print ('... Loading Docker Image from %s.tar' % (image_name))
-    subprocess.run(['docker', 'load', '-i', str(out_name)], capture_output=True, text=True)
+        print ('... Loading Docker Image from %s.tar' % (image_name))
+        subprocess.run(['docker', 'load', '-i', tmp_tar.name], capture_output=True, text=True)
 
     if not image_exists(image_name):
         raise OpenRankFailedDockerLoadError('Could not load %s' % (image_name))
