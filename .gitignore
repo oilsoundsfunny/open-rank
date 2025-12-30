@@ -4,3 +4,4 @@
 *.zst
 __pycache__/
 client/worker.info
+client/tarballs/

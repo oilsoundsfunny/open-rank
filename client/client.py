@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
+import io
 import json
 import os
+import pathlib
 import requests
+import tarfile
+import zstandard as zstd
 
 from exceptions import *
 from hardware import HardwareConfig
@@ -69,9 +73,37 @@ def client_connect(args, hwinfo):
 def client_request_work(args, auth_data):
 
     if 'error' in (resp := requests.post(url_join(args.server, 'client/request_work/'), data=auth_data).json()):
-        raise OpenRankAuthenticationError(resp['error'])
+        raise OpenRankGeneralReqError(resp['error'])
 
     return resp
+
+def client_pull_image(args, auth_data, engine_json):
+
+    # TODO: Check if the image already exists
+
+    payload = {
+        **auth_data,
+        'engine_id' : engine_json['engine_id']
+    }
+
+    resp = requests.post(url_join(args.server, 'client/pull_image/'), data=payload, stream=True)
+
+    if resp.headers.get('Content-Type', '').startswith('application/json'):
+        raise OpenRankGeneralReqError(resp.json()['error'])
+
+    out_dir = pathlib.Path('tarballs')
+    out_dir.mkdir(exist_ok=True)
+
+    out_name = out_dir / (engine_json['image'] + '.tar')
+
+    with zstd.ZstdDecompressor().stream_reader(resp.raw) as reader:
+        with open(out_name, 'wb') as fout:
+            for chunk in iter(lambda: reader.read(1024 * 1024), b''):
+                fout.write(chunk)
+
+    # TODO: Import the image into docker from the tarball
+
+    pass
 
 if __name__ == '__main__':
 
@@ -91,3 +123,6 @@ if __name__ == '__main__':
     workload = client_request_work(args, auth_data)
 
     print (workload)
+
+    client_pull_image(args, auth_data, workload['engine_a'])
+    client_pull_image(args, auth_data, workload['engine_b'])

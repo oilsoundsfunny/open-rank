@@ -53,8 +53,11 @@ class Engine(models.Model):
             )
         ]
 
-    def dockerimage_name(self):
+    def image_name(self):
         return 'openrank-%s-%s' % (self.family.name.lower(), self.version.lower())
+
+    def tarball_name(self):
+        return self.image_name() + '.tar.zst'
 
     def __str__(self):
         return '%s %s' % (self.family.name, self.version)

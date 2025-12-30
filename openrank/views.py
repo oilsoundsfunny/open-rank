@@ -1,11 +1,12 @@
 import json
+import pathlib
 import secrets
 
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.db import transaction
 from django.db.models import F
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -256,12 +257,14 @@ def client_request_work(request):
             'increment'    : pairing.stage.rating_list.increment,
         },
         'engine_a' : {
-            'image' : pairing.engine_a.dockerimage_name(),
-            'nps'   : pairing.engine_a.nps,
+            'image'     : pairing.engine_a.image_name(),
+            'nps'       : pairing.engine_a.nps,
+            'engine_id' : pairing.engine_a.id,
         },
         'engine_b' : {
-            'image' : pairing.engine_b.dockerimage_name(),
-            'nps'   : pairing.engine_b.nps,
+            'image'     : pairing.engine_b.image_name(),
+            'nps'       : pairing.engine_b.nps,
+            'engine_id' : pairing.engine_b.id,
         },
     }
 
@@ -270,3 +273,27 @@ def client_request_work(request):
         Pairing.objects.filter(pk=pairing.pk).update(book_index=F('book_index') + workload['config']['games'])
 
     return JsonResponse(workload)
+
+@csrf_exempt
+@require_POST
+def client_pull_image(request):
+
+    # Always authenticate via the secret token
+    worker, resp = client_auth_helper(request)
+    if resp != None:
+        return resp
+
+    engine_id = request.POST.get('engine_id')
+    print (engine_id)
+    if not engine_id or not (engine := Engine.objects.filter(id=engine_id).first()):
+        return JsonResponse({ 'error' : 'Attempting to pull non-existent engine image' })
+
+    # TODO: We must verify that this worker is eligible for the requested image
+
+    path = pathlib.Path('engines/tarballs') / engine.tarball_name()
+
+    import sys
+    sys.stdout.write(str(path) + '\n')
+    sys.stdout.flush()
+
+    return FileResponse(open(path, 'rb'), as_attachment=True, filename=engine.tarball_name())
