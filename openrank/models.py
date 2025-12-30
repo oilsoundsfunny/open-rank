@@ -72,8 +72,12 @@ class RatingList(models.Model):
     hashsize     = models.IntegerField()
     base_time    = models.FloatField()
     increment    = models.FloatField()
+    book         = models.CharField(max_length=255)
 
     engines = models.ManyToManyField('Engine', related_name='rating_lists', blank=True)
+
+    def book_artifact(self):
+        return self.book + '.zst'
 
     def __str__(self):
         return '%d-thread %d + %d' % (self.thread_count, self.base_time, self.increment)

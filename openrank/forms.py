@@ -24,7 +24,7 @@ class EngineForm(forms.ModelForm):
 class RatingListForm(forms.ModelForm):
     class Meta:
         model = RatingList
-        fields = ['name', 'thread_count', 'hashsize', 'base_time', 'increment']
+        fields = ['name', 'thread_count', 'hashsize', 'base_time', 'increment', 'book']
 
 class RatingListStageForm(forms.ModelForm):
     class Meta:

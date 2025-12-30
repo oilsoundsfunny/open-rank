@@ -124,4 +124,4 @@ LOGOUT_REDIRECT_URL = '/'
 AUTH_USER_MODEL     = 'openrank.User'
 
 ENGINE_ARTIFACT_DIR = BASE_DIR / 'engines' / 'tarballs'
-BOOK_ARTIFACT_DIR   = BASE_DIR / 'books'
+BOOK_ARTIFACT_DIR   = BASE_DIR / 'books' / 'artifacts'
