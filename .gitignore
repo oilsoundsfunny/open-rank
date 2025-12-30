@@ -3,5 +3,6 @@
 *.sqlite3
 *.zst
 __pycache__/
-client/worker.info
+books/artifacts/
 client/tarballs/
+client/worker.info
