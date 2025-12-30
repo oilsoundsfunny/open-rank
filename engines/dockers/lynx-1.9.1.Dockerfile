@@ -13,4 +13,6 @@ FROM ubuntu:24.04
 
 COPY --from=builder /lynx /usr/local/bin/lynx/
 
+ENV DOTNET_gcServer=0
+
 CMD [ "/usr/local/bin/lynx/Lynx.Cli" ]
