@@ -26,5 +26,6 @@ urlpatterns = [
 
     # Client Views
 
-    path('client/connect', views.client_connect, name='client_connect'),
+    path('client/connect/', views.client_connect, name='client_connect'),
+    path('client/request_work/', views.client_request_work, name='client_request_work'),
 ]

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import os
 import requests
 
@@ -8,7 +9,7 @@ from exceptions import *
 from hardware import HardwareConfig
 
 def url_join(*parts):
-    return '/'.join(p.strip('/') for p in parts if p)
+    return '/'.join(p.strip('/') for p in parts if p) + '/'
 
 def parse_arguments():
 
@@ -40,7 +41,7 @@ def parse_arguments():
 
     return args
 
-def client_connect(args):
+def client_connect(args, hwinfo):
 
     secret = worker_id = None
 
@@ -48,15 +49,27 @@ def client_connect(args):
         with open('worker.info', 'r') as f:
             secret, worker_id = f.read().strip().split()
 
-    payload = { 'username': args.username, 'password': args.password }
+    payload = {
+        'username' : args.username,
+        'password' : args.password,
+        'hardware' : json.dumps(vars(hwinfo)),
+    }
+
     if secret and worker_id:
         payload.update({ 'secret': secret, 'worker_id': worker_id })
 
-    if 'error' in (resp := requests.post(url_join(args.server, 'client/connect'), data=payload).json()):
+    if 'error' in (resp := requests.post(url_join(args.server, 'client/connect/'), data=payload).json()):
         raise OpenRankAuthenticationError(resp['error'])
 
     with open('worker.info', 'w') as f:
         f.write('%s %s' % (resp['secret'], resp['worker_id']))
+
+    return resp
+
+def client_request_work(args, auth_data):
+
+    if 'error' in (resp := requests.post(url_join(args.server, 'client/request_work/'), data=auth_data).json()):
+        raise OpenRankAuthenticationError(resp['error'])
 
     return resp
 
@@ -68,6 +81,13 @@ if __name__ == '__main__':
     # Grab the hardware info first, in case this machine is not allowed
     hwinfo = HardwareConfig()
 
-    # Going forward, all requests contain secret and worker_id
-    auth_data = client_connect(parse_arguments())
+    # Username, Password, Server
+    args = parse_arguments()
 
+    # Going forward, all requests contain secret and worker_id
+    auth_data = client_connect(args, hwinfo)
+
+    # Could be { 'warning' : ... }
+    workload = client_request_work(args, auth_data)
+
+    print (workload)

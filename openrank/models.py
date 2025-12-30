@@ -53,6 +53,9 @@ class Engine(models.Model):
             )
         ]
 
+    def dockerimage_name(self):
+        return 'openrank-%s-%s' % (self.family.name.lower(), self.version.lower())
+
     def __str__(self):
         return '%s %s' % (self.family.name, self.version)
 
@@ -106,11 +109,18 @@ class Pairing(models.Model):
     # Should be updated if underlying RatingListStage ever changes
     finished = models.BooleanField(default=False)
 
+    def games(self):
+        return sum(self.penta())
+
     def penta(self):
         return (self.LL, self.LD, self.DD, self.DW, self.WW)
 
+    def workload_size(self, worker):
+        # Always over-assign work, to avoid quiet-vs-noisy neighbor dynamic
+        return max(0, self.stage.games - self.games()) + 2 * worker.hwinfo['logical_cores']
+
     def compute_finished(self):
-        self.finished = sum(self.penta()) >= self.stage.games
+        self.finished = self.games() >= self.stage.games
         return self.finished
 
     def save(self, *args, **kwargs):

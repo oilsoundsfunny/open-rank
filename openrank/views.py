@@ -1,11 +1,15 @@
+import json
 import secrets
 
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
+from django.db import transaction
+from django.db.models import F
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+
 
 from .models import *
 from .forms import *
@@ -187,6 +191,7 @@ def client_connect(request):
     password  = request.POST.get('password')
     worker_id = request.POST.get('worker_id')
     secret    = request.POST.get('secret')
+    hardware  = json.loads(request.POST.get('hardware'))
 
     if not username or not password:
         return JsonResponse({ 'error' : 'Missing username or password.' })
@@ -197,12 +202,18 @@ def client_connect(request):
     if not user.enabled:
         return JsonResponse({ 'error' : 'Authenticated successfully, but the user is not enabled.' })
 
+    if not hardware or 'logical_cores' not in hardware:
+        return JsonResponse({ 'error' : 'Must provide at least logical_cores for hardware info.' })
+
     worker = None # Attempt to fetch an already saved Worker
     if worker_id and secret:
         worker = Worker.objects.filter(id=worker_id, secret=secret, user=user).first()
 
     if not worker: # No such Worker found, create a new one
         worker = Worker.objects.create(user=user, secret=secrets.token_hex(32))
+
+    worker.hwinfo = hardware
+    worker.save()
 
     return JsonResponse({
         'secret'    : worker.secret,
@@ -218,4 +229,44 @@ def client_request_work(request):
     if resp != None:
         return resp
 
+    # TODO: This should be filtered for private engines, to ensure the user can build it
+    # TODO: This should be filtered to ensure core counts are sufficient
+    # TODO: This should be filtered to ensure memory reqs. are met
 
+    pairing = (
+        Pairing.objects
+        .select_related('stage__rating_list')
+        .filter(finished=False)
+        .order_by('book_index', 'id')
+        .first()
+    )
+
+    if not pairing:
+        return JsonResponse({ 'warning' : 'No pairings need to be to played right now. ' })
+
+    # TODO: This should be providing information about an Opening Book
+
+    workload = {
+        'config' : {
+            'games'        : pairing.workload_size(worker),
+            'pairing_id'   : pairing.id,
+            'thread_count' : pairing.stage.rating_list.thread_count,
+            'hashsize'     : pairing.stage.rating_list.hashsize,
+            'base_time'    : pairing.stage.rating_list.base_time,
+            'increment'    : pairing.stage.rating_list.increment,
+        },
+        'engine_a' : {
+            'image' : pairing.engine_a.dockerimage_name(),
+            'nps'   : pairing.engine_a.nps,
+        },
+        'engine_b' : {
+            'image' : pairing.engine_b.dockerimage_name(),
+            'nps'   : pairing.engine_b.nps,
+        },
+    }
+
+    # Kick book_index as a pseudo priority mechanism
+    with transaction.atomic():
+        Pairing.objects.filter(pk=pairing.pk).update(book_index=F('book_index') + workload['config']['games'])
+
+    return JsonResponse(workload)
